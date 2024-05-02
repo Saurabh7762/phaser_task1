@@ -17,15 +17,19 @@ const GameScene = ({ initialCounter, onCounterZero }) => {
     const game = new Phaser.Game(gameConfig);
 
     function preload() {
-     this.load.image("background", "/assets/ball.png");
-     this.load.audio("clockSound", "/assets/clock_sound.mp3");
+      this.load.image("background", "/assets/ball.png");
+      this.load.audio("clockSound", "/assets/clock_sound.mp3");
     }
 
-    
+  
     function create() {
       // Create your game elements here
       const backgroundImage = this.add.image(400, 300, "background");
-       backgroundImage.setScale(0.045);
+      backgroundImage.setScale(0.045);
+
+      // Random initial velocity for the ball (increased for faster movement)
+      let velocityX = Phaser.Math.Between(-600, 600);
+      let velocityY = Phaser.Math.Between(-600, 600);
 
       if (initialCounter > 0) {
         this.counter = initialCounter;
@@ -42,6 +46,7 @@ const GameScene = ({ initialCounter, onCounterZero }) => {
           callbackScope: this,
           loop: true,
         });
+
         // Rotate the background image
         this.tweens.add({
           targets: backgroundImage,
@@ -50,17 +55,38 @@ const GameScene = ({ initialCounter, onCounterZero }) => {
           repeat: -1, // Repeat indefinitely
         });
 
-        // Move the background image up and down
-        this.tweens.add({
-          targets: backgroundImage,
-          y: 500, // Set target y-coordinate slightly above the bottom of the scene
-          duration: 650, // Decrease duration for faster movement
-          yoyo: true,
-          repeat: -1,
-          ease: "Sine.easeInOut",
+        // Move the background image using velocity vectors
+        this.time.addEvent({
+          delay: 16, // Update every 16ms for smooth motion
+          callback: function () {
+            // Convert velocity to per-frame movement
+            backgroundImage.x += velocityX / 60;
+            backgroundImage.y += velocityY / 60;
+
+            // Reflect off the walls
+            if (backgroundImage.x < 50 || backgroundImage.x > 750) {
+              velocityX *= -1;
+            }
+            if (backgroundImage.y < 50 || backgroundImage.y > 550) {
+              velocityY *= -1;
+            }
+
+            // Randomly change direction only when hitting a wall or a corner
+            if (
+              (backgroundImage.x <= 0 || backgroundImage.x >= 750) &&
+              (backgroundImage.y <= 0 || backgroundImage.y >= 550)
+            ) {
+              velocityX = Phaser.Math.Between(-600, 600);
+              velocityY = Phaser.Math.Between(-600, 600);
+            }
+          },
+          callbackScope: this,
+          loop: true,
         });
       }
     }
+
+
 
 
 
